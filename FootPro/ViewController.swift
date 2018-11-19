@@ -26,6 +26,13 @@ class ViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDataSo
         txt_selectCountry.inputView = countryMenu
         txt_selectCountry.placeholder = "Select country"
     }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        //Modifying the Navigation Bar
+        navigationController?.navigationBar.barTintColor = UIColor.black
+        navigationController?.navigationBar.titleTextAttributes = [NSAttributedStringKey.foregroundColor : UIColor.white]
+    }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()

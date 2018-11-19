@@ -9,7 +9,9 @@
 import UIKit
 
 class LeagueListCell: UITableViewCell {
+    
     @IBOutlet weak var leagueName: UILabel!
+    @IBOutlet weak var view_container: UIView!
     
     override func awakeFromNib() {
         super.awakeFromNib()

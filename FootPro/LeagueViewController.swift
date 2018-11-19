@@ -14,21 +14,24 @@ class LeagueViewController: UIViewController, UITableViewDataSource, UITableView
     var leagueName : String?
     var leagueArray = [League]()
     @IBOutlet weak var LeagueList: UITableView!
-    //var activityIndicator: UIActivityIndicatorView?
+    var activityIndicator: UIActivityIndicatorView?
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        //activityIndicator = UIActivityIndicatorView()
+        activityIndicator = UIActivityIndicatorView()
         getLeagueDetails()
         
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        //Modifying the Navigation Bar and Title Color
+        navigationController?.navigationBar.barTintColor = UIColor.black
+        navigationController?.navigationBar.titleTextAttributes = [NSAttributedStringKey.foregroundColor : UIColor.white]
     }
     
     func getLeagueDetails() {
-        //showOrHideActivityIndicator(show: true)
+        showOrHideActivityIndicator(show: true)
         leagueArray = []
         LeagueList.delegate = self
         LeagueList.dataSource = self
@@ -39,31 +42,40 @@ class LeagueViewController: UIViewController, UITableViewDataSource, UITableView
         
         let url = URL(string: getLeague)
         URLSession.shared.dataTask(with:url!) { (data, response, error) in
-            if error != nil {
-                print(error!)
-            } else {
-                do {
-                    
-                    let leagueDetails = try JSONSerialization.jsonObject(with: data!, options: .allowFragments) as! NSArray
-                    for leagueDetail in leagueDetails {
-                        if let leagueDetailDict = leagueDetail as? NSDictionary {
-                            var league = League(leagueName: "", leagueID: "")
-                            if let leaguename = leagueDetailDict.value(forKey: "league_name"){
-                                league.leagueName = leaguename as! String
-                            }
-                            if let leagueid = leagueDetailDict.value(forKey: "league_id"){
-                                league.leagueID = leagueid as! String
-                            }
-                            self.leagueArray.append(league)
-                            OperationQueue.main.addOperation({
-                                self.LeagueList.reloadData()
-                            })
+            DispatchQueue.main.async(execute: {
+                self.showOrHideActivityIndicator(show: false)
+            })
+            
+            guard let data = data, error == nil else {
+                self.showError(message: Constants.error_internet)
+                return
+            }
+            
+            if let httpStatus = response as? HTTPURLResponse, httpStatus.statusCode != 200 {
+                self.showError(message: Constants.error_server)
+                return
+            }
+            
+            do {
+                let leagueDetails = try JSONSerialization.jsonObject(with: data, options: .allowFragments) as! NSArray
+                for leagueDetail in leagueDetails {
+                    if let leagueDetailDict = leagueDetail as? NSDictionary {
+                        var league = League(leagueName: "", leagueID: "")
+                        if let leaguename = leagueDetailDict.value(forKey: "league_name"){
+                            league.leagueName = leaguename as! String
                         }
+                        if let leagueid = leagueDetailDict.value(forKey: "league_id"){
+                            league.leagueID = leagueid as! String
+                        }
+                        self.leagueArray.append(league)
+                        OperationQueue.main.addOperation({
+                            self.LeagueList.reloadData()
+                        })
                     }
+                  }
                 } catch let error as NSError {
                     print(error)
                 }
-            }
             }.resume()
     }
     
@@ -71,9 +83,18 @@ class LeagueViewController: UIViewController, UITableViewDataSource, UITableView
         return leagueArray.count
     }
     
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 40
+    }
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "LeagueCell") as! LeagueListCell
         cell.leagueName.text = leagueArray[indexPath.row].leagueName
+        cell.view_container.backgroundColor = UIColor.white
+        cell.view_container.layer.borderColor = UIColor.black.cgColor
+        cell.view_container.layer.borderWidth = 1
+        cell.view_container.layer.cornerRadius = 11
+        cell.backgroundColor = UIColor.clear
         return cell
     }
     
@@ -83,14 +104,13 @@ class LeagueViewController: UIViewController, UITableViewDataSource, UITableView
         print(indexPath.row)
         standingController?.league_Name = leagueArray[indexPath.row].leagueName
         standingController?.league_ID = leagueArray[indexPath.row].leagueID
-        print("I'm here")
         print(leagueArray[indexPath.row].leagueName)
         print(leagueArray[indexPath.row].leagueID)
         self.navigationController?.pushViewController(standingController!, animated: true)
     }
     
     
-    /*func showOrHideActivityIndicator(show: Bool) {
+    func showOrHideActivityIndicator(show: Bool) {
         if (show) {
             activityIndicator?.center = self.view.center
             activityIndicator?.hidesWhenStopped = true
@@ -102,7 +122,13 @@ class LeagueViewController: UIViewController, UITableViewDataSource, UITableView
             UIApplication.shared.endIgnoringInteractionEvents()
             activityIndicator?.stopAnimating()
         }
-    }*/
+    }
+    
+    func showError(message: String) {
+        DispatchQueue.main.async(execute: {
+            self.present(Constants.createAlert(title: "Error", message: message), animated: true, completion: nil)
+        })
+    }
     
 
     override func didReceiveMemoryWarning() {

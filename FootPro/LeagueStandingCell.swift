@@ -10,6 +10,7 @@ import UIKit
 
 class LeagueStandingCell: UITableViewCell {
 
+    @IBOutlet weak var view_standingCell: UIView!
     @IBOutlet weak var lb_position: UILabel!
     @IBOutlet weak var lb_team: UILabel!
     @IBOutlet weak var lb_matchesPlayed: UILabel!
